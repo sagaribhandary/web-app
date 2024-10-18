@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataSyncer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fc;
+            color: #0c0c0c;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #00509e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .container {
+            padding: 40px;
+            max-width: 600px;
+            margin: auto;
+            background-color: rgb(255, 255, 255);
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0);
+        }
+
+        .file-input {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: #0c0c0c;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        footer {
+    background-color: #00509e;
+    padding: 20px;
+    color: white;
+    font-size: 0.9rem;
+    position: relative; /* Position elements inside relatively */
+}
+
+footer span {
+    font-size: 1rem;
+    display: inline-block;
+}
+
+footer img {
+    position: absolute;
+    bottom: 10px; /* Adjust distance from the bottom of the footer */
+    right: 10px; /* Adjust distance from the right of the footer */
+    height: 40px;
+}
+
+.diff-output {
+            text-align:left;
+            font-size: 0.9rem;
+            background-color: #d7cccc;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+       
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>DataSyncer</h1>
+    </header>
+
+    <div class="container">
+        <div class="file-input">
+            <label for="file1">Upload File 1:</label>
+            <input type="file" id="file1" accept=".txt">
+        </div>
+
+        <div class="file-input">
+            <label for="file2">Upload File 2:</label>
+            <input type="file" id="file2" accept=".txt">
+        </div>
+
+        <button id="compareButton">Compare data</button>
+
+        <p id="result"></p>
+        <div id="diffOutput" class="diff-output"></div>
+    </div>
+
+    <footer>
+        <span>Paras Anti Dron Technologies Pvt Ltd.</span>
+        <img src="https://th.bing.com/th?id=OIP.cJkwvvzgKcbZic38u2vOYQHaEH&w=335&h=186&c=8&rs=1&qlt=90&r=0&o=6&dpr=1.3&pid=3.1&rm=2text=Logo" alt="Paras Defence & Space Technology Logo">
+    </footer>
+    
+
+    <script>
+        // Selecting file input elements
+        const fileInput1 = document.getElementById('file1');
+        const fileInput2 = document.getElementById('file2');
+        const compareButton = document.getElementById('compareButton');
+        const result = document.getElementById('result');
+        const diffOutput = document.getElementById('diffOutput');
+
+        // Function to read the file as text using FileReader API
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file);
+            });
+        }
+
+        // Event listener for Compare button click
+        compareButton.addEventListener('click', async () => {
+            const file1 = fileInput1.files[0]; // Get first file
+            const file2 = fileInput2.files[0]; // Get second file
+
+            // Check if both files are uploaded
+            if (!file1 || !file2) {
+                result.textContent = 'Please upload both files to compare.';
+                result.style.color = 'red';
+                return;
+            }
+
+            try {
+                // Reading both files asynchronously
+                const file1Text = await readFileAsText(file1);
+                const file2Text = await readFileAsText(file2);
+
+                // Splitting the files into lines
+                const file1Lines = file1Text.split(/\r?\n/);
+                const file2Lines = file2Text.split(/\r?\n/);
+
+                // Compare the file contents line by line
+                const maxLength = Math.max(file1Lines.length, file2Lines.length);
+                let differences = '';
+
+                for (let i = 0; i < maxLength; i++) {
+                    const line1 = file1Lines[i] || ''; // Default to empty string if no line
+                    const line2 = file2Lines[i] || '';
+
+                    if (line1 !== line2) {
+                        differences += `Difference at line ${i + 1}:<br>
+                        File 1: ${line1 || 'N/A'}<br>
+                        File 2: ${line2 || 'N/A'}<br><br>`;
+                    }
+                }
+
+                // Display results
+                if (differences) {
+                    result.textContent = 'DATA DIDNOT MATCH!';
+                    result.style.color = 'orange';
+                    diffOutput.innerHTML = differences;
+                } else {
+                    result.textContent = 'DATA MATCHED!';
+                    result.style.color = 'green';
+                    diffOutput.innerHTML = '';
+                }
+
+            } catch (error) {
+                result.textContent = 'Error reading files. Please try again.';
+                result.style.color = 'red';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

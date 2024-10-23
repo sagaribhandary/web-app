@@ -16,7 +16,7 @@
             flex-direction: column;
             justify-content: space-between;
             min-height: 100vh;
-            width: 100vw; /* Allow full width */
+            width: 100vw;
         }
 
         header {
@@ -41,8 +41,8 @@
         }
 
         .container {
-            padding: 60px; /* Increased padding for more space */
-            max-width: 900px; /* Increase max width for better appearance on larger screens */
+            padding: 60px;
+            max-width: 900px;
             margin: auto;
             background-color: rgb(255, 255, 255);
             border-radius: 8px;
@@ -63,7 +63,7 @@
 
         input[type="file"] {
             width: 100%;
-            padding: 10px; /* Increased padding for a more spacious feel */
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 1rem;
@@ -94,7 +94,19 @@
         #errorCount {
             font-size: 1.1rem;
             margin-top: 5px;
-            color: orange; /* Match color with error indication */
+            color: rgb(255, 162, 0);
+        }
+
+        #lengthMatch {
+            font-size: 1.1rem;
+            margin-top: 5px;
+            color: green;
+        }
+
+        #percentage {
+            font-size: 1.1rem;
+            margin-top: 5px;
+            color: green;
         }
 
         footer {
@@ -141,24 +153,26 @@
         <button id="compareButton">Compare data</button>
 
         <p id="result"></p>
-        <p id="errorCount"></p> <!-- Added paragraph for error count -->
+        <p id="errorCount"></p>
+        <p id="lengthMatch"></p>
+        <p id="percentage"></p>
         <div id="diffOutput" class="diff-output"></div>
     </div>
 
     <footer>
-        <span>Paras Anti Drone Technologies Pvt Ltd.</span>
+        <span>Paras Defense And Space Technologies Pvt Ltd.</span>
     </footer>
 
     <script>
-        // Selecting file input elements
         const fileInput1 = document.getElementById('file1');
         const fileInput2 = document.getElementById('file2');
         const compareButton = document.getElementById('compareButton');
         const result = document.getElementById('result');
-        const errorCountDisplay = document.getElementById('errorCount'); // New variable for error count display
+        const errorCountDisplay = document.getElementById('errorCount');
+        const lengthMatchDisplay = document.getElementById('lengthMatch');
+        const percentageDisplay = document.getElementById('percentage');
         const diffOutput = document.getElementById('diffOutput');
 
-        // Function to read the file as text using FileReader API
         function readFileAsText(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -168,63 +182,79 @@
             });
         }
 
-        // Event listener for Compare button click
         compareButton.addEventListener('click', async () => {
-            const file1 = fileInput1.files[0]; // Get first file
-            const file2 = fileInput2.files[0]; // Get second file
+            const file1 = fileInput1.files[0];
+            const file2 = fileInput2.files[0];
 
-            // Check if both files are uploaded
             if (!file1 || !file2) {
                 result.textContent = 'Please upload both files to compare.';
                 result.style.color = 'red';
-                errorCountDisplay.textContent = ''; // Clear error count
+                errorCountDisplay.textContent = '';
+                lengthMatchDisplay.textContent = '';
+                percentageDisplay.textContent = '';
+                diffOutput.innerHTML = '';
                 return;
             }
 
             try {
-                // Reading both files asynchronously
                 const file1Text = await readFileAsText(file1);
                 const file2Text = await readFileAsText(file2);
 
-                // Splitting the files into lines
                 const file1Lines = file1Text.split(/\r?\n/);
                 const file2Lines = file2Text.split(/\r?\n/);
-
-                // Compare the file contents line by line
                 const maxLength = Math.max(file1Lines.length, file2Lines.length);
                 let differences = '';
-                let errorCount = 0; // Variable to count the number of errors
+                let errorCount = 0;
 
                 for (let i = 0; i < maxLength; i++) {
-                    const line1 = file1Lines[i] || ''; // Default to empty string if no line
+                    const line1 = file1Lines[i] || '';
                     const line2 = file2Lines[i] || '';
 
                     if (line1 !== line2) {
-                        errorCount++; // Increment error count when lines don't match
+                        errorCount++;
                         differences += `Difference at line ${i + 1}:<br>
                         File 1: ${line1 || 'N/A'}<br>
                         File 2: ${line2 || 'N/A'}<br><br>`;
                     }
                 }
 
-                // Display results
+                // Check length match
+                const lengthMatch = file1Text.length === file2Text.length;
+                lengthMatchDisplay.textContent = lengthMatch ? 
+                    'File Lengths Match.' : 
+                    `File Lengths Do Not Match. File 1 Length: ${file1Text.length}, File 2 Length: ${file2Text.length}.`;
+                lengthMatchDisplay.style.color = lengthMatch ? 'green' : 'red';
+
+                // Set results based on comparison
                 if (errorCount > 0) {
                     result.textContent = 'DATA DID NOT MATCH!';
                     errorCountDisplay.textContent = `Found ${errorCount} error(s) out of ${maxLength} lines.`;
                     result.style.color = 'red';
-                    errorCountDisplay.style.color = 'red'; // Match color with result indication
+                    errorCountDisplay.style.color = 'red';
                     diffOutput.innerHTML = differences;
                 } else {
                     result.textContent = 'DATA MATCHED!';
-                    errorCountDisplay.textContent = ''; // Clear error count on match
+                    errorCountDisplay.textContent = 'No errors found.';
                     result.style.color = 'green';
+                    errorCountDisplay.style.color = 'green';
                     diffOutput.innerHTML = '';
+                }
+
+                // Calculate percentage of matching lines only if lengths match
+                if (lengthMatch) {
+                    const totalLines = Math.min(file1Lines.length, file2Lines.length);
+                    const percentage = (1-((totalLines - errorCount) / totalLines)) * 100;
+                    percentageDisplay.textContent = `BER: ${percentage.toFixed(2)}%`;
+                } else {
+                    percentageDisplay.textContent = '';
                 }
 
             } catch (error) {
                 result.textContent = 'Error reading files. Please try again.';
                 result.style.color = 'orange';
-                errorCountDisplay.textContent = ''; // Clear error count on error
+                errorCountDisplay.textContent = '';
+                lengthMatchDisplay.textContent = '';
+                percentageDisplay.textContent = '';
             }
         });
     </script>
